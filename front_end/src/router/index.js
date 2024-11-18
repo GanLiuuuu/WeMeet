@@ -7,7 +7,7 @@ const router = createRouter({
 	routes: [
 		{
 			path: '/',
-			component: DashBoardView
+			component: ConnectView
 		},
 		{
 			path: '/dashboard',

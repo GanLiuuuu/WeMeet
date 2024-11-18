@@ -56,6 +56,7 @@ export default {
           // 这里可以添加需要发送的数据
         });
         console.log('连接成功:', response.data);
+        alert(response)
         this.$router.push('/dashboard');
       } catch (error) {
         alert(error)
