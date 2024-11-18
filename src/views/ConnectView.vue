@@ -55,8 +55,8 @@ export default {
         const response = await axios.post(`http://${this.ip}:${this.port}/connect`, {
           // 这里可以添加需要发送的数据
         });
-        alert(response.data);
         console.log('连接成功:', response.data);
+        this.$router.push('/dashboard');
       } catch (error) {
         alert(error)
       }
