@@ -43,7 +43,7 @@
               </button>
             </Menu>
             <Menu as="div" class="relative">
-              <button class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
+              <button @click="createNewMeeting" class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
                 New Meeting
                 <PlusIcon class="size-5 text-gray-500" aria-hidden="true" />
               </button>
@@ -84,26 +84,22 @@
   </template>
   
   <script setup>
-  import {
-    ArrowPathIcon,
-    PlusIcon,
-    ServerIcon,
-
-  } from '@heroicons/vue/24/outline'
-  import { Bars3Icon, ChevronRightIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
+  import { ArrowPathIcon, PlusIcon, ServerIcon } from '@heroicons/vue/24/outline';
+  import { ref, onMounted } from 'vue';
+  import io from 'socket.io-client';
   
   const navigation = [
     { name: 'Meeting list', href: '#', icon: ServerIcon, current: true },
-    
-  ]
-
+  ];
+  
   const statuses = {
     offline: 'text-gray-500 bg-gray-100/10',
     online: 'text-green-400 bg-green-400/10',
     error: 'text-rose-400 bg-rose-400/10',
-  }
-
-  const meetings = [
+  };
+  
+  // 使用 ref 管理会议列表
+  const meetings = ref([
     {
       id: 1,
       href: '#',
@@ -112,29 +108,29 @@
       status: 'offline',
       description: 'work work',
     },
-    {
-      id: 2,
-      href: '#',
-      meetingName: 'work harder',
-      hostName: 'GoatDoctor',
-      status: 'error',
-      description: 'work work work',
-    },
-    // More meetings...
-  ]
-
+  ]);
   
+  let socket;
+  
+  const createNewMeeting = () => {
+    const newMeeting = {
+      id: Date.now(), // 基于时间戳生成唯一ID
+      href: '#',
+      meetingName: 'New Meeting',
+      hostName: 'New Host',
+      status: 'offline',
+      description: 'New meeting description',
+    };
+    socket.emit('createMeeting', newMeeting); // 发送新会议到服务器
+  };
+  
+  // 更新会议列表
+  const updateMeetingsList = (newMeeting) => {
+    meetings.value.push(newMeeting);
+  };
+  
+  onMounted(() => {
+    socket = io.connect('http://localhost:5001');
+    socket.on('newMeeting', updateMeetingsList);
+  });
   </script>
-  <script>
-export default {
-
-  methods: {
-    
-
-  },
-  mounted(){
-    this.socket = io.connect('http://localhost:5001');
-
-  }
-};
-</script>
