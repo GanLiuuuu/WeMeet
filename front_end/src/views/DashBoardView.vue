@@ -14,7 +14,7 @@
               <li>
                 <ul role="list" class="-mx-2 space-y-1">
                   <li v-for="item in navigation" :key="item.name">
-                    <a :href="item.href" :class="[item.current ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
+                    <a :href="item.href" :class="[item.current ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-900', 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold']">
                       <component :is="item.icon" class="size-6 shrink-0" aria-hidden="true" />
                       {{ item.name }}
                     </a>
@@ -23,7 +23,7 @@
               </li>
               
               <li class="-mx-6 mt-auto">
-                <a href="#" class="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-white hover:bg-gray-800">
+                <a href="#" class="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-800">
                   <img class="size-8 rounded-full bg-gray-800" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
                   <span class="sr-only">Your profile</span>
                   <span aria-hidden="true">Tom Cook</span>
@@ -37,10 +37,10 @@
       <div class="xl:pl-72">
 
         <main class="lg:pr-px">
-          <header class="flex items-center justify-between border-b border-white/5 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-            <h1 class="text-base/7 font-semibold text-white">Meetings</h1>
+          <header class="flex items-center justify-between border-b border-gray-500/5 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <h1 class="text-base/7 font-semibold text-gray-900">Meetings</h1>
             <Menu as="div" class="relative">
-            <MenuButton class="flex items-center gap-x-1 text-sm/6 font-medium text-white">
+            <MenuButton class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
               New Meeting
               <PlusIcon class="size-5 text-gray-500" aria-hidden="true" />
             </MenuButton>
@@ -49,14 +49,14 @@
           </header>
   
           <!-- Meeting list -->
-          <ul role="list" class="divide-y divide-white/5">
+          <ul role="list" class="divide-y divide-gray-500/5">
             <li v-for="deployment in deployments" :key="deployment.id" class="relative flex items-center space-x-4 px-4 py-4 sm:px-6 lg:px-8">
               <div class="min-w-0 flex-auto">
                 <div class="flex items-center gap-x-3">
                   <div :class="[statuses[deployment.status], 'flex-none rounded-full p-1']">
                     <div class="size-2 rounded-full bg-current" />
                   </div>
-                  <h2 class="min-w-0 text-sm/6 font-semibold text-white">
+                  <h2 class="min-w-0 text-sm/6 font-semibold text-gray-900">
                     <a :href="deployment.href" class="flex gap-x-2">
                       <span class="truncate">{{ deployment.hostName }}</span>
                       <span class="text-gray-400">/</span>
