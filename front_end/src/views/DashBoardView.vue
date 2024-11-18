@@ -125,3 +125,16 @@
 
   
   </script>
+  <script>
+export default {
+
+  methods: {
+    
+
+  },
+  mounted(){
+    this.socket = io.connect('http://localhost:5001');
+
+  }
+};
+</script>
