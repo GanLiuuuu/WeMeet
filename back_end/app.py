@@ -13,7 +13,6 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 socketio = SocketIO(app, cors_allowed_origins=['http://localhost:3000']) 
 meetings = []
 
-# 处理消息
 @socketio.on('message')
 def handle_message(msg):
     print(f"Received message: {msg}")
@@ -21,14 +20,15 @@ def handle_message(msg):
 
 @socketio.on('createMeeting')
 def handle_new_meeting(data):
-    meetings.append(data)  # 将新会议添加到列表
+    meetings.append(data)  
+    print(meetings)
     print('new meeting added')
-    # 广播新会议数据给所有连接的客户端
     emit('newMeeting', data, broadcast=True)
 
 @socketio.on('connect')
 def handle_connect():
     print('new client connect')
-    emit('newMeeting', meetings, broadcast=False)
+    for meeting in meetings:
+        emit('newMeeting', meeting, broadcast=False)
 if __name__ == '__main__':
     socketio.run(app, host='localhost', port=5001)
