@@ -1,17 +1,25 @@
-from flask import Flask, request, jsonify
+from flask import Flask
+from flask_socketio import SocketIO, send
 from flask_cors import CORS
-
+def after_request(resp):
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
 app = Flask(__name__)
-CORS(app)  # 允许所有域名的跨域请求
+app.after_request(after_request)
 
-@app.route('/connect', methods=['POST'])
-def connect():
-    data = request.get_json()
-    print('连接请求:', data)
+cors = CORS(app) # allow CORS for all domains on all routes.
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+socketio = SocketIO(app, cors_allowed_origins=['http://localhost:3000']) 
+
+# 处理消息
+@socketio.on('message')
+def handle_message(msg):
+    print(f"Received message: {msg}")
+    send(f"Echo: {msg}")
+@socketio.on('connect')
+def test_connect():
+    print ("client connected:")
     
-    # 这里可以处理连接逻辑，例如验证 IP 和端口
-    # 假设连接成功
-    return jsonify({'message': '连接成功'}), 200
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)  # 或者使用 host='127.0.0.1' 仅限本地访问
+    socketio.run(app, host='localhost', port=5001)

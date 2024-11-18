@@ -1,6 +1,4 @@
-
 <template>
-
     <div>
       <!-- Static sidebar for desktop -->
       <div class="hidden xl:fixed xl:inset-y-0 xl:z-50 xl:flex xl:w-72 xl:flex-col">
@@ -35,38 +33,42 @@
       </div>
   
       <div class="xl:pl-72">
-
         <main class="lg:pr-px">
           <header class="flex items-center justify-between border-b border-gray-500/5 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
             <h1 class="text-base/7 font-semibold text-gray-900">Meetings</h1>
             <Menu as="div" class="relative">
-            <MenuButton class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
-              New Meeting
-              <PlusIcon class="size-5 text-gray-500" aria-hidden="true" />
-            </MenuButton>
-            
-          </Menu>
+              <button class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
+                Refresh
+                <ArrowPathIcon class="size-5 text-gray-500" aria-hidden="true" />
+              </button>
+            </Menu>
+            <Menu as="div" class="relative">
+              <button class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
+                New Meeting
+                <PlusIcon class="size-5 text-gray-500" aria-hidden="true" />
+              </button>
+            </Menu>
           </header>
   
           <!-- Meeting list -->
           <ul role="list" class="divide-y divide-gray-500/5">
-            <li v-for="deployment in deployments" :key="deployment.id" class="relative flex items-center space-x-4 px-4 py-4 sm:px-6 lg:px-8">
+            <li v-for="meeting in meetings" :key="meeting.id" class="relative flex items-center space-x-4 px-4 py-4 sm:px-6 lg:px-8">
               <div class="min-w-0 flex-auto">
                 <div class="flex items-center gap-x-3">
-                  <div :class="[statuses[deployment.status], 'flex-none rounded-full p-1']">
+                  <div :class="[statuses[meeting.status], 'flex-none rounded-full p-1']">
                     <div class="size-2 rounded-full bg-current" />
                   </div>
                   <h2 class="min-w-0 text-sm/6 font-semibold text-gray-900">
-                    <a :href="deployment.href" class="flex gap-x-2">
-                      <span class="truncate">{{ deployment.hostName }}</span>
+                    <a :href="meeting.href" class="flex gap-x-2">
+                      <span class="truncate">{{ meeting.hostName }}</span>
                       <span class="text-gray-400">/</span>
-                      <span class="whitespace-nowrap">{{ deployment.meetingName }}</span>
+                      <span class="whitespace-nowrap">{{ meeting.meetingName }}</span>
                       <span class="absolute inset-0" />
                     </a>
                   </h2>
                 </div>
                 <div class="mt-3 flex items-center gap-x-2.5 text-xs/5 text-gray-400">
-                  <p class="truncate">{{ deployment.description }}</p>
+                  <p class="truncate">{{ meeting.description }}</p>
                   <svg viewBox="0 0 2 2" class="size-0.5 flex-none fill-gray-300">
                     <circle cx="1" cy="1" r="1" />
                   </svg>
@@ -82,20 +84,9 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
   import {
-    Dialog,
-    DialogPanel,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-    TransitionChild,
-    TransitionRoot,
-  } from '@headlessui/vue'
-  import {
-
-      PlusIcon,
+    ArrowPathIcon,
+    PlusIcon,
     ServerIcon,
 
   } from '@heroicons/vue/24/outline'
@@ -112,7 +103,7 @@
     error: 'text-rose-400 bg-rose-400/10',
   }
 
-  const deployments = [
+  const meetings = [
     {
       id: 1,
       href: '#',
@@ -129,7 +120,7 @@
       status: 'error',
       description: 'work work work',
     },
-    // More deployments...
+    // More meetings...
   ]
 
   
