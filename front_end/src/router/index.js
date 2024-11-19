@@ -3,12 +3,14 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ConnectView from '../views/ConnectView.vue'
 import DashBoardView from '../views/DashBoardView.vue'
 import MeetingView from '../views/MeetingView.vue'
+import NewMeetingView from '../views/NewMeetingView.vue'
 const router = createRouter({
 	history: createWebHistory(),
 	routes: [
 		{
 			path: '/',
 			component: DashBoardView
+
 		},
 		{
 			path: '/dashboard',
@@ -17,6 +19,10 @@ const router = createRouter({
 		{
 			path: '/meeting',
 			component: MeetingView
+		},
+		{
+			path: '/new',
+			component: NewMeetingView
 		}
 
 

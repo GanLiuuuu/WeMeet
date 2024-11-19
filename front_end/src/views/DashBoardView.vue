@@ -87,6 +87,7 @@
   import { ArrowPathIcon, PlusIcon, ServerIcon } from '@heroicons/vue/24/outline';
   import { ref, onMounted } from 'vue';
   import io from 'socket.io-client';
+import router from '../router';
   
   const navigation = [
     { name: 'Meeting list', href: '#', icon: ServerIcon, current: true },
@@ -100,33 +101,26 @@
   
   // 使用 ref 管理会议列表
   const meetings = ref([
-    {
-      id: 1,
-      href: '#',
-      meetingName: 'work hard',
-      hostName: 'SheepDoctor',
-      status: 'offline',
-      description: 'work work',
-    },
+    // {
+    //   id: 1,
+    //   href: '#',
+    //   meetingName: 'work hard',
+    //   hostName: 'SheepDoctor',
+    //   status: 'offline',
+    //   description: 'work work',
+    // },
   ]);
   
   let socket;
   
   const createNewMeeting = () => {
-    const newMeeting = {
-      id: Date.now(), // 基于时间戳生成唯一ID
-      href: '#',
-      meetingName: 'New Meeting',
-      hostName: 'New Host',
-      status: 'offline',
-      description: 'New meeting description',
-    };
-    socket.emit('createMeeting', newMeeting); // 发送新会议到服务器
+    router.push('/new');
   };
   
-  // 更新会议列表
-  const updateMeetingsList = (newMeeting) => {
-    meetings.value.push(newMeeting);
+  const updateMeetingsList = (newMeetings) => {
+    meetings.value = [];
+    meetings.value.push(...newMeetings);
+    
   };
   
   onMounted(() => {

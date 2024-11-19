@@ -105,7 +105,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import MeetingGrid from '../component/MeetingGrid.vue'
   import {
     Dialog,
@@ -148,50 +148,17 @@
     tax: '$1,760.00',
     total: '$10,560.00',
     items: [
-      {
-        id: 1,
-        title: 'Logo redesign',
-        description: 'New logo and digital asset playbook.',
-        hours: '20.0',
-        rate: '$100.00',
-        price: '$2,000.00',
-      },
-      {
-        id: 2,
-        title: 'Website redesign',
-        description: 'Design and program new company website.',
-        hours: '52.0',
-        rate: '$100.00',
-        price: '$5,200.00',
-      },
-      {
-        id: 3,
-        title: 'Business cards',
-        description: 'Design and production of 3.5" x 2.0" business cards.',
-        hours: '12.0',
-        rate: '$100.00',
-        price: '$1,200.00',
-      },
-      {
-        id: 4,
-        title: 'T-shirt design',
-        description: 'Three t-shirt design concepts.',
-        hours: '4.0',
-        rate: '$100.00',
-        price: '$400.00',
-      },
+      { id: 1, title: 'Logo redesign', description: 'New logo and digital asset playbook.', hours: '20.0', rate: '$100.00', price: '$2,000.00' },
+      { id: 2, title: 'Website redesign', description: 'Design and program new company website.', hours: '52.0', rate: '$100.00', price: '$5,200.00' },
+      { id: 3, title: 'Business cards', description: 'Design and production of 3.5" x 2.0" business cards.', hours: '12.0', rate: '$100.00', price: '$1,200.00' },
+      { id: 4, title: 'T-shirt design', description: 'Three t-shirt design concepts.', hours: '4.0', rate: '$100.00', price: '$400.00' },
     ],
   }
   const chat = [
-
     {
       id: 4,
       type: 'commented',
-      person: {
-        name: 'Chelsea Hagon',
-        imageUrl:
-          'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-      },
+      person: { name: 'Chelsea Hagon', imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
       comment: 'is getting full score in this course possible?',
       date: '3d ago',
       dateTime: '2023-01-23T15:56',
@@ -199,15 +166,56 @@
     {
       id: 4,
       type: 'commented',
-      person: {
-        name: 'Chelsea Hagon',
-        imageUrl:
-          'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-      },
+      person: { name: 'Chelsea Hagon', imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
       comment: 'idk what to say',
       date: '2d ago',
       dateTime: '2023-01-23T15:56',
-    }
+    },
   ]
-
+  
+  // 新增的摄像头视频流处理部分
+  const videoElement = ref(null)
+  const ws = ref(null) // WebSocket连接
+  
+  // 连接WebSocket
+  const connectWebSocket = () => {
+    ws.value = new WebSocket("ws://localhost:5000/video")
+    ws.value.onopen = () => {
+      console.log("WebSocket连接成功")
+    }
+    ws.value.onmessage = (message) => {
+      console.log("收到消息:", message.data)
+    }
+  }
+  
+  // 获取摄像头视频流并发送数据
+  const startVideoStream = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      videoElement.value.srcObject = stream
+      sendVideoStream(stream)
+    } catch (err) {
+      console.error("获取摄像头视频流失败:", err)
+    }
+  }
+  
+  // 通过WebSocket发送视频数据
+  const sendVideoStream = (stream) => {
+    const videoTrack = stream.getVideoTracks()[0]
+    const mediaRecorder = new MediaRecorder(stream)
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (ws.value && ws.value.readyState === WebSocket.OPEN) {
+        ws.value.send(event.data)
+      }
+    }
+    
+    mediaRecorder.start(100) // 每100ms发送一次数据
+  }
+  
+  // 在组件挂载时启动视频流
+  onMounted(() => {
+    connectWebSocket()
+    startVideoStream()
+  })
   </script>
