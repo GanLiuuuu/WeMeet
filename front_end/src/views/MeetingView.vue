@@ -183,7 +183,7 @@ const meetingId = props.id;
   ]
   
   // 新增的摄像头视频流处理部分
-  const videoElement = ref(null)
+  // const videoElement = ref(null)
   const ws = ref(null) // WebSocket连接
   
   // 连接WebSocket
@@ -197,35 +197,34 @@ const meetingId = props.id;
     }
   }
   
-  // 获取摄像头视频流并发送数据
-  const startVideoStream = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      videoElement.value.srcObject = stream
-      sendVideoStream(stream)
-    } catch (err) {
-      console.error("获取摄像头视频流失败:", err)
-    }
-  }
+
+// // 启动视频流
+// const startVideoStream = async () => {
+//   try {
+//     const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+//     videoElement.value.srcObject = stream
+//     sendVideoStream(stream)
+//   } catch (err) {
+//     console.error("获取摄像头视频流失败:", err)
+//   }
+// }
+
+// // 通过 WebSocket 发送视频流
+// const sendVideoStream = (stream) => {
+//   const videoTrack = stream.getVideoTracks()[0]
+//   const mediaRecorder = new MediaRecorder(stream)
   
-  // 通过WebSocket发送视频数据
-  const sendVideoStream = (stream) => {
-    const videoTrack = stream.getVideoTracks()[0]
-    const mediaRecorder = new MediaRecorder(stream)
-    
-    mediaRecorder.ondataavailable = (event) => {
-      if (ws.value && ws.value.readyState === WebSocket.OPEN) {
-        ws.value.send(event.data)
-      }
-    }
-    
-    mediaRecorder.start(100) // 每100ms发送一次数据
-  }
+//   mediaRecorder.ondataavailable = (event) => {
+//     console.log("视频数据:", event.data)
+//     // 发送数据到 WebSocket，如果需要的话
+//   }
   
-  // 在组件挂载时启动视频流
-  onMounted(() => {
-    //connectWebSocket()
-    //startVideoStream()
-  })
+//   mediaRecorder.start(100) // 每100ms发送一次数据
+// }
+
+// // 组件挂载时启动视频流
+// onMounted(() => {
+//   startVideoStream()
+// });
   
   </script>
