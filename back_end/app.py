@@ -91,15 +91,8 @@ def handle_join(data):
             
 @socketio.on('createMessage')
 def handle_create_message(data):
-    """
-    处理前端发送的新消息并将其添加到指定会议的聊天记录。
-    """
     meeting_id = int(data.get('meetingId'))  # 获取会议 ID
     new_message = data.get('message')  # 获取新消息
-    
-
-    
-    # 构建新的消息对象
     message = {
         'id': new_message['id'],  # 使用传递过来的消息 ID
         'type': new_message['type'],
@@ -108,15 +101,12 @@ def handle_create_message(data):
         'date': new_message['date'],  # 当前日期
         'dateTime': new_message['dateTime']  # ISO 格式的时间
     }
-    
-    # 查找对应会议并添加消息到 chat 中
+    print('get client message!')
+    print(message)
     for meeting in meetings:
         if meeting['id'] == meeting_id:
             meeting['chat'].append(message)
-            print(f"Message added to meeting {meeting_id}: {message}")
             break
-    
-    # 广播更新后的聊天记录给所有客户端
-    emit('update_chat_message', {'Id': meeting_id, 'messages': meeting['chat']}, broadcast=True)
+    emit('update_chat_message', {'Id': meeting_id, 'message': meeting['chat']},broadcast=True)
 if __name__ == '__main__':
     socketio.run(app, host='localhost', port=5001)

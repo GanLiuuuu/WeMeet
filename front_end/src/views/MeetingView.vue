@@ -62,14 +62,14 @@
             <!-- New Message -->
             <div class="mt-6 flex gap-x-3">
               <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" class="size-6 flex-none rounded-full bg-gray-50" />
-              <form action="#" class="relative flex-auto">
+              <form action="#" class="relative flex-auto" @submit.prevent="handleSubmit">
                 <div class="overflow-hidden rounded-lg pb-12 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
                   <label for="comment" class="sr-only">Add your comment</label>
                   <textarea
                     v-model="newComment"
                     rows="2"
-                    name="comment"
-                    id="comment"
+                    name="newComment"
+                    id="newComment"
                     class="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm/6"
                     placeholder="Add your comment..."
                   />                
@@ -77,7 +77,7 @@
   
                 <div class="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
                   
-                  <button @click="handleSubmit" type="submit" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Comment</button>
+                  <button type="submit" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Comment</button>
                 </div>
               </form>
             </div>
@@ -141,46 +141,47 @@ const meetingId = props.id;
       console.log("Socket.IO connected")
       socket.emit('join', { meetingId })
     })
-  //   socket.on('update_chat_message', (messages) => {
-  //   console.log("Received messages:", messages)
-  //   chat.value = []
-  //   chat.value.push(...messages)
-  // })
-  socket.on('update_chat_message', function(data) {
-    console.error("Received messages:", Object.values(data.message))
+
+
+  }
+  onMounted(() => {
+    connectSocket()
+    socket.on('update_chat_message', function(data) {
+    if(!data.message) {
+      return}
     if (Number(data.Id) === Number(meetingId)) {
       const arr = Object.values(data.message)
-      alert(arr)
       chat.value = []
       chat.value = Object.values(data.message).slice()
     }
 });
-  }
-  onMounted(() => {
-    connectSocket()
+
   })
+
 const handleSubmit = () => {
-  const currentDateTime = new Date();
+  if(newComment.value !== '') {
+    const currentDateTime = new Date();
     const formattedDate = currentDateTime.toLocaleDateString();
     const formattedDateTime = currentDateTime.toISOString();
   const message = {
-      id: Date.now(),  // 使用当前时间戳作为 id，或者你可以使用数据库 ID
+      id: 1,  // 使用当前时间戳作为 id，或者你可以使用数据库 ID
       type: 'commented',
       person: {
         name: 'Gan',  // 可以替换为用户的名字
         imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'  // 默认头像
       },
       comment: newComment.value,
-      date: formattedDate,  // 当前日期
-      dateTime: formattedDateTime  // ISO 格式的时间
+      date: 'secret',  // 当前日期
+      dateTime: 'secret'  // ISO 格式的时间
     };
-
   socket.emit('createMessage', { message, meetingId}); 
 
   newComment.value = '';
 
+  }
 
-  router.push('/'); 
+ 
+
 };
 
   
