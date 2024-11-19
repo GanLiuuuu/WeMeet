@@ -15,6 +15,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 socketio = SocketIO(app, cors_allowed_origins=['http://localhost:3000']) 
 meetings = []
+users = {}
 
 @socketio.on('message')
 def handle_message(msg):
@@ -108,5 +109,21 @@ def handle_create_message(data):
             meeting['chat'].append(message)
             break
     emit('update_chat_message', {'Id': meeting_id, 'message': meeting['chat']},broadcast=True)
+
+@socketio.on('register_user')
+def handle_register_user(user_data):
+    users[request.sid] = user_data  # Store user data with session ID
+    emit('user_list', users, broadcast=True) 
+@socketio.on('video_data')
+def handle_video_data(data):
+    # Handle incoming video data (e.g., save or process it)
+    # Broadcast video data to other clients if needed
+    emit('video_stream', {'userId': request.sid, 'data': data}, broadcast=True)
+@socketio.on('disconnect')
+def handle_disconnect():
+    if request.sid in users:
+        del users[request.sid]  # Remove user on disconnect
+        emit('user_list', users, broadcast=True)  # Broadcast updated user list
+    
 if __name__ == '__main__':
     socketio.run(app, host='localhost', port=5001)

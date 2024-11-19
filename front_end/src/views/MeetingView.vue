@@ -30,7 +30,7 @@
  
   
           <!-- Meeting Grid -->
-          <div class="-mx-4 px-4 py-8 shadow-sm ring-1 ring-gray-900/5 sm:mx-0 sm:rounded-lg sm:px-8 sm:pb-14 lg:col-span-2 lg:row-span-2 lg:row-end-2 xl:px-16 xl:pb-20 xl:pt-16">
+          <div v-if="isSocketReady" class="-mx-4 px-4 py-8 shadow-sm ring-1 ring-gray-900/5 sm:mx-0 sm:rounded-lg sm:px-8 sm:pb-14 lg:col-span-2 lg:row-span-2 lg:row-end-2 xl:px-16 xl:pb-20 xl:pt-16">
             <div class="w-full">
                 <MeetingGrid/>
             </div>
@@ -89,7 +89,6 @@
   
   <script setup>
   import { ref, onMounted } from 'vue'
-  import MeetingGrid from '../component/MeetingGrid.vue'
   import {
     Dialog,
     DialogPanel,
@@ -119,9 +118,10 @@
   } from '@heroicons/vue/20/solid'
   import { BellIcon, XMarkIcon as XMarkIconOutline } from '@heroicons/vue/24/outline'
   import { CheckCircleIcon } from '@heroicons/vue/24/solid'
-  import { defineProps } from 'vue';
+  import { defineProps, provide } from 'vue';
   import io from 'socket.io-client';
-
+  import MeetingGrid from '../component/MeetingGrid.vue'
+const newComment = ref('')
 const props = defineProps({
   id: {
     type: String,
@@ -134,16 +134,22 @@ const meetingId = props.id;
 
   const chat = ref([])
   
-  let socket;
+  let socket = null;
+  const isSocketReady = ref(false); // Track socket readiness
+
   const connectSocket = () => {
     socket = io("http://localhost:5001")  
     socket.on('connect', () => {
       console.log("Socket.IO connected")
       socket.emit('join', { meetingId })
     })
+    isSocketReady.value = true; // Set to true when socket is ready
+
 
 
   }
+    provide('socket', socket);
+
   onMounted(() => {
     connectSocket()
     socket.on('update_chat_message', function(data) {
@@ -174,15 +180,15 @@ const handleSubmit = () => {
       date: 'secret',  // 当前日期
       dateTime: 'secret'  // ISO 格式的时间
     };
+    newComment.value = '';
   socket.emit('createMessage', { message, meetingId}); 
 
-  newComment.value = '';
 
   }
-
- 
 
 };
 
   
 </script>
+
+
