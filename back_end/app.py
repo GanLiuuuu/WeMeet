@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask
 from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
@@ -25,6 +26,21 @@ def handle_new_meeting(data):
     meeting_id = len(meetings) + 1  
     participants = []  # 初始化参会人员列表
     chat = []
+        # 添加一个默认的系统消息到聊天记录
+    default_message = {
+        'id': 1,
+        'type': 'commented',
+        'person': {
+            'name': 'System',
+            'imageUrl': 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'  # 系统头像可以使用默认的图片
+        },
+        'comment': 'Welcome to the meeting! The meeting has been successfully created.',
+        'date': 'secret date',  # 当前时间作为消息日期
+        'dateTime': 'secretDateTime'  # ISO格式的时间
+    }
+    
+    # 将默认消息添加到聊天记录
+    chat.append(default_message)
     new_meeting = {
         'id': meeting_id,
         'href': '/meeting/' + str(meeting_id),
@@ -32,7 +48,9 @@ def handle_new_meeting(data):
         'hostName': data.get('hostName'),
         'status': data.get('status'),
         'description': data.get('description'),
-        'meeting_data': data  
+        'meeting_data': data  ,
+        'participants': participants,
+        'chat': chat    
     }
     meetings.append(new_meeting)  
     print(meetings)
@@ -57,5 +75,16 @@ def handle_video_frame(frame):
         cv2.waitKey(1)  # OpenCV显示图像的方式
     
     emit('response', {'data': 'Frame received'})  # 可以返回一个响应给客户端
+    
+@socketio.on('join')
+def handle_join(data):
+    meeting_id = int(data.get('meetingId'))
+    print(f"User joined meeting: {meeting_id}")
+    for m in meetings:
+        if int(m['id']) == meeting_id:
+            print('enter')
+            meeting = m
+            print(meeting['chat'])
+            emit('update_chat_message', meeting['chat'],broadcast=False)
 if __name__ == '__main__':
     socketio.run(app, host='localhost', port=5001)
