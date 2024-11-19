@@ -1,5 +1,9 @@
 import datetime
 from flask import Flask
+import io
+import numpy as np
+import cv2
+from PIL import Image
 from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
 import cv2
@@ -112,17 +116,39 @@ def handle_create_message(data):
 
 @socketio.on('register_user')
 def handle_register_user(user_data):
-    users[request.sid] = user_data  # Store user data with session ID
+    users[1] = user_data  # Store user data with session ID
     emit('user_list', users, broadcast=True) 
 @socketio.on('video_data')
 def handle_video_data(data):
     # Handle incoming video data (e.g., save or process it)
     # Broadcast video data to other clients if needed
-    emit('video_stream', {'userId': request.sid, 'data': data}, broadcast=True)
+    print('send video ')
+    emit('video_stream', data, broadcast=True)
+@socketio.on('video_frame')
+def handle_video_frame(image_data):
+    try:
+        # 将接收到的图像数据转换为图像（PIL Image）
+        image = Image.open(io.BytesIO(image_data))
+        
+        # 将 PIL 图像转换为 OpenCV 格式（NumPy 数组）
+        image_cv = np.array(image)
+        image_cv = cv2.cvtColor(image_cv, cv2.COLOR_RGB2BGR)
+
+        # 这里可以对图像进行处理，如转为灰度图
+        processed_image = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
+
+        # 将处理后的图像编码为 JPEG 格式
+        _, buffer = cv2.imencode('.jpg', processed_image)
+        frame_data = buffer.tobytes()
+
+        # 将处理后的图像发送回客户端
+        socketio.emit('processed_frame', frame_data)
+    except Exception as e:
+        print(f"Error processing frame: {e}")
 @socketio.on('disconnect')
 def handle_disconnect():
-    if request.sid in users:
-        del users[request.sid]  # Remove user on disconnect
+    if 1 in users:
+        del users[1]  # Remove user on disconnect
         emit('user_list', users, broadcast=True)  # Broadcast updated user list
     
 if __name__ == '__main__':

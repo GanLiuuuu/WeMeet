@@ -148,10 +148,11 @@ const meetingId = props.id;
 
 
   }
-    provide('socket', socket);
+    
 
   onMounted(() => {
     connectSocket()
+    provide('socket', socket);
     socket.on('update_chat_message', function(data) {
     if(!data.message) {
       return}
@@ -182,10 +183,7 @@ const handleSubmit = () => {
     };
     newComment.value = '';
   socket.emit('createMessage', { message, meetingId}); 
-
-
   }
-
 };
 
   
