@@ -27,7 +27,7 @@ def handle_new_meeting(data):
     chat = []
     new_meeting = {
         'id': meeting_id,
-        'href': data.get('href'),
+        'href': '/meeting/' + str(meeting_id),
         'meetingName': data.get('meetingName'),
         'hostName': data.get('hostName'),
         'status': data.get('status'),

@@ -26,7 +26,7 @@
           <div class="mx-auto flex max-w-2xl items-center justify-between gap-x-8 lg:mx-0 lg:max-w-none">
             <div class="flex items-center gap-x-6">
               <h1>
-                <div class="text-sm/6 text-gray-500">Meeting <span class="text-gray-700">#007</span></div>
+                <div class="text-sm/6 text-gray-500">Meeting <span class="text-gray-700">{{ meetingId }}</span></div>
                 <div class="mt-1 text-base font-semibold text-gray-900">GAN</div>
               </h1>
             </div>
@@ -136,7 +136,16 @@
   } from '@heroicons/vue/20/solid'
   import { BellIcon, XMarkIcon as XMarkIconOutline } from '@heroicons/vue/24/outline'
   import { CheckCircleIcon } from '@heroicons/vue/24/solid'
-  
+  import { defineProps } from 'vue';
+
+const props = defineProps({
+  id: {
+    type: String,
+    required: true,
+  },
+});
+
+const meetingId = props.id;
   const navigation = [
     { name: 'Home', href: '#' },
     { name: 'Invoices', href: '#' },
@@ -215,7 +224,8 @@
   
   // 在组件挂载时启动视频流
   onMounted(() => {
-    connectWebSocket()
-    startVideoStream()
+    //connectWebSocket()
+    //startVideoStream()
   })
+  
   </script>

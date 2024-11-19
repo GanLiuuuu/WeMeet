@@ -37,7 +37,7 @@
           <header class="flex items-center justify-between border-b border-gray-500/5 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
             <h1 class="text-base/7 font-semibold text-gray-900">Meetings</h1>
             <Menu as="div" class="relative">
-              <button class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
+              <button  class="flex items-center gap-x-1 text-sm/6 font-medium text-gray-900">
                 Refresh
                 <ArrowPathIcon class="size-5 text-gray-500" aria-hidden="true" />
               </button>

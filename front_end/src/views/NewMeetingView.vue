@@ -48,6 +48,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { io } from 'socket.io-client';
 
+
 const router = useRouter();
 const meetingName = ref('');
 const hostName = ref('');
