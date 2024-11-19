@@ -1,17 +1,4 @@
-<!--
-  This example requires some changes to your config:
-  
-  ```
-  // tailwind.config.js
-  module.exports = {
-    // ...
-    plugins: [
-      // ...
-      require('@tailwindcss/forms'),
-    ],
-  }
-  ```
--->
+
 <template>
     <main>
       <header class="relative isolate pt-">
@@ -54,12 +41,11 @@
             <!-- Chatting area -->
             <h2 class="text-sm/6 font-semibold text-gray-900">Chat</h2>
             <ul role="list" class="mt-6 space-y-6">
-              <li v-for="(message, messageIdc) in chat" :key="message.id" class="relative flex gap-x-4">
-                <div :class="[messageIdc === chat.length - 1 ? 'h-6' : '-bottom-6', 'absolute left-0 top-0 flex w-6 justify-center']">
+              <li v-for="message in chat" :key="message.id" class="relative flex gap-x-4">
+                <!-- <div :class="[messageIdc === chat.length - 1 ? 'h-6' : '-bottom-6', 'absolute left-0 top-0 flex w-6 justify-center']">
                   <div class="w-px bg-gray-200" />
-                </div>
-                <template v-if="message.type === 'commented'">
-                  <img :src="message.person.imageUrl" alt="" class="relative mt-3 size-6 flex-none rounded-full bg-gray-50" />
+                </div> -->
+                <img :src="message.person.imageUrl" alt="" class="relative mt-3 size-6 flex-none rounded-full bg-gray-50" />
                   <div class="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
                     <div class="flex justify-between gap-x-4">
                       <div class="py-0.5 text-xs/5 text-gray-500">
@@ -69,17 +55,7 @@
                     </div>
                     <p class="text-sm/6 text-gray-500">{{ message.comment }}</p>
                   </div>
-                </template>
-                <template v-else>
-                  <div class="relative flex size-6 flex-none items-center justify-center bg-white">
-                    <CheckCircleIcon v-if="message.type === 'paid'" class="size-6 text-indigo-600" aria-hidden="true" />
-                    <div v-else class="size-1.5 rounded-full bg-gray-100 ring-1 ring-gray-300" />
-                  </div>
-                  <p class="flex-auto py-0.5 text-xs/5 text-gray-500">
-                    <span class="font-medium text-gray-900">{{ message.person.name }}</span> {{ message.type }} the invoice.
-                  </p>
-                  <time :datetime="message.dateTime" class="flex-none py-0.5 text-xs/5 text-gray-500">{{ message.date }}</time>
-                </template>
+                
               </li>
             </ul>
   
@@ -89,12 +65,19 @@
               <form action="#" class="relative flex-auto">
                 <div class="overflow-hidden rounded-lg pb-12 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
                   <label for="comment" class="sr-only">Add your comment</label>
-                  <textarea rows="2" name="comment" id="comment" class="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm/6" placeholder="Add your comment..." />
+                  <textarea
+                    v-model="newComment"
+                    rows="2"
+                    name="comment"
+                    id="comment"
+                    class="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm/6"
+                    placeholder="Add your comment..."
+                  />                
                 </div>
   
                 <div class="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
                   
-                  <button type="submit" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Comment</button>
+                  <button @click="handleSubmit" type="submit" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Comment</button>
                 </div>
               </form>
             </div>
@@ -151,25 +134,54 @@ const meetingId = props.id;
 
   const chat = ref([])
   
-let socket;
+  let socket;
   const connectSocket = () => {
-  socket = io("http://localhost:5001")  
-  socket.on('connect', () => {
-    console.log("Socket.IO connected")
-    socket.emit('join', { meetingId })
-  })
-  
-  socket.on('update_chat_message', (messages) => {
-    alert('hi')
-  console.log("Received messages:", messages)
-  chat.value = []
-  // Assuming messages is an array of message objects, we push them into chat array
-  chat.value.push(...messages)
-})
-}
+    socket = io("http://localhost:5001")  
+    socket.on('connect', () => {
+      console.log("Socket.IO connected")
+      socket.emit('join', { meetingId })
+    })
+  //   socket.on('update_chat_message', (messages) => {
+  //   console.log("Received messages:", messages)
+  //   chat.value = []
+  //   chat.value.push(...messages)
+  // })
+  socket.on('update_chat_message', function(data) {
+    console.error("Received messages:", Object.values(data.message))
+    if (Number(data.Id) === Number(meetingId)) {
+      const arr = Object.values(data.message)
+      alert(arr)
+      chat.value = []
+      chat.value = Object.values(data.message).slice()
+    }
+});
+  }
   onMounted(() => {
     connectSocket()
   })
+const handleSubmit = () => {
+  const currentDateTime = new Date();
+    const formattedDate = currentDateTime.toLocaleDateString();
+    const formattedDateTime = currentDateTime.toISOString();
+  const message = {
+      id: Date.now(),  // 使用当前时间戳作为 id，或者你可以使用数据库 ID
+      type: 'commented',
+      person: {
+        name: 'Gan',  // 可以替换为用户的名字
+        imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'  // 默认头像
+      },
+      comment: newComment.value,
+      date: formattedDate,  // 当前日期
+      dateTime: formattedDateTime  // ISO 格式的时间
+    };
+
+  socket.emit('createMessage', { message, meetingId}); 
+
+  newComment.value = '';
+
+
+  router.push('/'); 
+};
+
   
-  
-  </script>
+</script>
