@@ -8,23 +8,31 @@ from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
 import cv2
 import numpy as np
+
+
+######################
+# interact with front#
+######################
 def after_request(resp):
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 app = Flask(__name__)
 app.after_request(after_request)
-
-cors = CORS(app) # allow CORS for all domains on all routes.
+cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-
 socketio = SocketIO(app, cors_allowed_origins=['http://localhost:3000']) 
 meetings = []
 users = {}
+my_id = 0
+@socketio.on('connect')
+def handle_connect():
+    '''
+    connect and get meetings from the server
+    '''
+    # TODO: get meetings from the server
+    emit('newMeeting',meetings,broadcast=True)
+    print('new client connect')
 
-@socketio.on('message')
-def handle_message(msg):
-    print(f"Received message: {msg}")
-    send(f"Echo: {msg}")
 @socketio.on('createMeeting')
 def handle_new_meeting(data):
     meeting_id = len(meetings) + 1  
@@ -54,14 +62,8 @@ def handle_new_meeting(data):
         'chat': chat    
     }
     meetings.append(new_meeting)  
-    print(meetings)
     print('new meeting added')
     emit('newMeeting', meetings, broadcast=True)
-
-@socketio.on('connect')
-def handle_connect():
-    emit('newMeeting',meetings,broadcast=True)
-    print('new client connect')
     
 @socketio.on('join')
 def handle_join(data):
@@ -106,21 +108,24 @@ def handle_register_user(user_data):
 def handle_video_frame(image_data):
     try:
         image = Image.open(io.BytesIO(image_data))
-        
-        # 将 PIL 图像转换为 OpenCV 格式（NumPy 数组）
         image_cv = np.array(image)
         image_cv = cv2.cvtColor(image_cv, cv2.COLOR_RGB2BGR)
-
-        # 这里可以对图像进行处理，如转为灰度图
         processed_image = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
-
-        # 将处理后的图像编码为 JPEG 格式
         _, buffer = cv2.imencode('.jpg', processed_image)
         frame_data = buffer.tobytes()
-
         socketio.emit('processed_frame', frame_data)
     except Exception as e:
         print(f"Error processing frame: {e}")
+# TODO: user leaving the meeting
+# @socketio.on('leave_meeting')
+# def handle_leave_meeting(data):
+#     meeting_id = int(data.get('meetingId'))
+#     for meeting in meetings:
+#         if meeting['id'] == meeting_id:
+#             meeting['participants'].remove(data.get('username'))
+#             break
+#     emit('update_participants', {'Id': meeting_id, 'participants': meeting['participants']},broadcast=True)
+
 @socketio.on('disconnect')
 def handle_disconnect():
     if 1 in users:
