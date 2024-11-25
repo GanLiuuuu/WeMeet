@@ -156,13 +156,11 @@ const meetingName = props.name;
     connectSocket()
     provide('socket', socket);
     socket.on('update_chat_message', function(data) {
-    if(!data.message) {
-      return}
-    if (Number(data.Id) === Number(meetingName)) {
+    
       const arr = Object.values(data.message)
       chat.value = []
       chat.value = Object.values(data.message).slice()
-    }
+    
 });
 
   })
