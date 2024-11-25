@@ -13,8 +13,8 @@
           <div class="mx-auto flex max-w-2xl items-center justify-between gap-x-8 lg:mx-0 lg:max-w-none">
             <div class="flex items-center gap-x-6">
               <h1>
-                <div class="text-sm/6 text-gray-500">Meeting <span class="text-gray-700">{{ meetingName }}</span></div>
-                <div class="mt-1 text-base font-semibold text-gray-900">GAN</div>
+                <div class="text-sm/6 text-gray-500">Meeting <span class="text-gray-700"></span></div>
+                <div class="mt-1 text-base font-semibold text-gray-900">{{ meetingName }}</div>
               </h1>
             </div>
             <div class="flex items-center gap-x-4 sm:gap-x-6">
