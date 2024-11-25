@@ -49,7 +49,7 @@
                   <div class="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
                     <div class="flex justify-between gap-x-4">
                       <div class="py-0.5 text-xs/5 text-gray-500">
-                        <span class="font-medium text-gray-900">{{ message.person.name }}</span> commented
+                        <span class="font-medium text-gray-900">{{ message.person }}</span> commented
                       </div>
                       <time :datetime="message.dateTime" class="flex-none py-0.5 text-xs/5 text-gray-500">{{ message.date }}</time>
                     </div>
