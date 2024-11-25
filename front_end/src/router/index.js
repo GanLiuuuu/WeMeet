@@ -25,7 +25,7 @@ const router = createRouter({
 			component: NewMeetingView
 		},
 		{
-			path: '/meeting/:id',
+			path: '/meeting/:name',
 			name: 'MeetingDetails',
 			component: MeetingView,
 			props: true, // To pass the `id` as a prop to the component

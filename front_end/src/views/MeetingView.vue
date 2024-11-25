@@ -13,13 +13,13 @@
           <div class="mx-auto flex max-w-2xl items-center justify-between gap-x-8 lg:mx-0 lg:max-w-none">
             <div class="flex items-center gap-x-6">
               <h1>
-                <div class="text-sm/6 text-gray-500">Meeting <span class="text-gray-700">{{ meetingId }}</span></div>
+                <div class="text-sm/6 text-gray-500">Meeting <span class="text-gray-700">{{ meetingName }}</span></div>
                 <div class="mt-1 text-base font-semibold text-gray-900">GAN</div>
               </h1>
             </div>
             <div class="flex items-center gap-x-4 sm:gap-x-6">
-              <a href="#" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">Exit</a>
-
+              <button @click="handleExit" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">Exit</button>
+              <button  @click="handleCancel" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Cancel</button>
             </div>
           </div>
         </div>
@@ -120,43 +120,45 @@
   import { CheckCircleIcon } from '@heroicons/vue/24/solid'
   import { defineProps, provide } from 'vue';
   import io from 'socket.io-client';
-  import MeetingGrid from '../component/MeetingGrid.vue'
+  import MeetingGrid from '../component/MeetingGrid.vue';
+  import router from '../router';
 const newComment = ref('')
 const props = defineProps({
-  id: {
+  name: {
     type: String,
     required: true,
   },
 });
 
-const meetingId = props.id;
+const meetingName = props.name;
 
 
   const chat = ref([])
   
   let socket = null;
-  const isSocketReady = ref(false); // Track socket readiness
+  const isSocketReady = ref(false); 
 
   const connectSocket = () => {
     socket = io("http://localhost:5001")  
     socket.on('connect', () => {
       console.log("Socket.IO connected")
-      socket.emit('join', { meetingId })
+      socket.emit('join', { meetingName })
     })
-    isSocketReady.value = true; // Set to true when socket is ready
-
-
+    isSocketReady.value = true; 
+  }
+  const handleCancel = () => {
 
   }
-    
-
+  const handleExit = () => {
+    router.push('/')
+  }
   onMounted(() => {
     connectSocket()
     provide('socket', socket);
     socket.on('update_chat_message', function(data) {
     if(!data.message) {
       return}
-    if (Number(data.Id) === Number(meetingId)) {
+    if (Number(data.Id) === Number(meetingName)) {
       const arr = Object.values(data.message)
       chat.value = []
       chat.value = Object.values(data.message).slice()
@@ -182,7 +184,7 @@ const handleSubmit = () => {
       dateTime: 'secret'  // ISO 格式的时间
     };
     newComment.value = '';
-  socket.emit('createMessage', { message, meetingId}); 
+  socket.emit('createMessage', { message, meetingName}); 
   }
 };
 
