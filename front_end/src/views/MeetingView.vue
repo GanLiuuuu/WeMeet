@@ -1,4 +1,3 @@
-
 <template>
     <main>
       <header class="relative isolate pt-">
@@ -147,10 +146,16 @@ const meetingName = props.name;
     isSocketReady.value = true; 
   }
   const handleCancel = () => {
-
+    if (socket) {
+      socket.emit('cancel', { meetingName });
+    }
+    router.push('/');
   }
   const handleExit = () => {
-    router.push('/')
+    if (socket) {
+      socket.emit('exit', { meetingName });
+    }
+    router.push('/');
   }
   onMounted(() => {
     connectSocket()
@@ -162,6 +167,12 @@ const meetingName = props.name;
       chat.value = Object.values(data.message).slice()
     
 });
+
+  // 添加断开连接的处理
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected');
+    isSocketReady.value = false;
+  });
 
   })
 
