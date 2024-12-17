@@ -38,25 +38,26 @@
   
           <div class="lg:col-start-3">
             <!-- Chatting area -->
-            <h2 class="text-sm/6 font-semibold text-gray-900">Chat</h2>
-            <ul role="list" class="mt-6 space-y-6">
-              <li v-for="message in chat" :key="message.id" class="relative flex gap-x-4">
-                <!-- <div :class="[messageIdc === chat.length - 1 ? 'h-6' : '-bottom-6', 'absolute left-0 top-0 flex w-6 justify-center']">
-                  <div class="w-px bg-gray-200" />
-                </div> -->
-                <img :src="message.person.imageUrl" alt="" class="relative mt-3 size-6 flex-none rounded-full bg-gray-50" />
+            <div class="chat-container">
+              <h2 class="text-sm/6 font-semibold text-gray-900">
+                Chat ({{ chat.length }} messages)
+              </h2>
+              <ul role="list" class="mt-6 space-y-6">
+                <li v-for="message in chat" :key="message.id" class="relative flex gap-x-4">
+                  <pre v-if="false">{{ JSON.stringify(message, null, 2) }}</pre>
+                  <img :src="message.person.imageUrl" alt="" class="relative mt-3 size-6 flex-none rounded-full bg-gray-50" />
                   <div class="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
                     <div class="flex justify-between gap-x-4">
                       <div class="py-0.5 text-xs/5 text-gray-500">
-                        <span class="font-medium text-gray-900">{{ message.person }}</span> commented
+                        <span class="font-medium text-gray-900">{{ message.person.name }}</span> commented
                       </div>
                       <time :datetime="message.dateTime" class="flex-none py-0.5 text-xs/5 text-gray-500">{{ message.date }}</time>
                     </div>
                     <p class="text-sm/6 text-gray-500">{{ message.comment }}</p>
                   </div>
-                
-              </li>
-            </ul>
+                </li>
+              </ul>
+            </div>
   
             <!-- New Message -->
             <div class="mt-6 flex gap-x-3">
@@ -87,7 +88,8 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue'
+  import { ref, onMounted, watch } from 'vue'
+  import { useRouter, onBeforeRouteLeave } from 'vue-router'
   import {
     Dialog,
     DialogPanel,
@@ -137,14 +139,31 @@ const meetingName = props.name;
   let socket = null;
   const isSocketReady = ref(false); 
 
-  const connectSocket = () => {
-    socket = io("http://localhost:5001")  
-    socket.on('connect', () => {
-      console.log("Socket.IO connected")
-      socket.emit('join', { meetingName })
-    })
-    isSocketReady.value = true; 
+  // 添加获取历史记录的函数
+  const requestChatHistory = () => {
+    console.log("Requesting chat history for meeting:", meetingName);
+    socket.emit('join', { meetingName });
   }
+
+  const connectSocket = () => {
+    console.log("Initializing socket connection...");
+    socket = io("http://localhost:5001");  // 使用默认配置
+
+    socket.on('connect', () => {
+      console.log("Socket.IO connected");
+      isSocketReady.value = true;
+      requestChatHistory();
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error("Socket connection error:", error);
+    });
+
+    socket.on('connect_timeout', () => {
+      console.error("Socket connection timeout");
+    });
+  }
+
   const handleCancel = () => {
     if (socket) {
       socket.emit('cancel', { meetingName });
@@ -158,46 +177,102 @@ const meetingName = props.name;
     router.push('/');
   }
   onMounted(() => {
-    connectSocket()
+    console.log("Component mounted, connecting socket...");
+    connectSocket();
     provide('socket', socket);
-    socket.on('update_chat_message', function(data) {
-    
-      const arr = Object.values(data.message)
-      chat.value = []
-      chat.value = Object.values(data.message).slice()
-    
-});
 
-  // 添加断开连接的处理
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected');
-    isSocketReady.value = false;
+    socket.on('update_chat_message', function(data) {
+      console.log("Socket received update_chat_message event");
+      console.log("Raw data received:", data);
+      
+      try {
+        if (!data || !data.message) {
+          console.warn("Received empty data or message");
+          return;
+        }
+
+        let messages = [];
+        if (Array.isArray(data.message)) {
+          console.log("Processing array message:", data.message);
+          messages = data.message;
+        } else if (typeof data.message === 'object' && data.message !== null) {
+          console.log("Processing object message:", data.message);
+          messages = Object.values(data.message);
+        } else {
+          console.warn("Invalid message format:", data.message);
+          return;
+        }
+
+        // 确保所有消息都有必要的字段
+        messages = messages.filter(msg => {
+          const isValid = msg && msg.id && msg.person && msg.comment && msg.dateTime;
+          if (!isValid) {
+            console.warn("Filtered out invalid message:", msg);
+          }
+          return isValid;
+        });
+
+        const sortedMessages = messages.sort((a, b) => 
+          new Date(a.dateTime) - new Date(b.dateTime)
+        );
+
+        console.log("Final sorted messages:", sortedMessages);
+        chat.value = sortedMessages;
+      } catch (error) {
+        console.error("Error processing chat update:", error);
+        console.error("Problematic data:", data);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      isSocketReady.value = false;
+    });
   });
 
-  })
+  // 处理组件销毁时的清理
+  onBeforeRouteLeave((to, from) => {
+    if (socket) {
+      socket.disconnect();
+    }
+  });
 
 const handleSubmit = () => {
-  if(newComment.value !== '') {
+  if(newComment.value.trim() !== '') {
     const currentDateTime = new Date();
-    const formattedDate = currentDateTime.toLocaleDateString();
-    const formattedDateTime = currentDateTime.toISOString();
-  const message = {
-      id: 1,  // 使用当前时间戳作为 id，或者你可以使用数据库 ID
+    const message = {
+      id: chat.value.length + 1,
       type: 'commented',
       person: {
-        name: 'Gan',  // 可以替换为用户的名字
-        imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'  // 默认头像
+        name: 'Gan',
+        imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
       },
-      comment: newComment.value,
-      date: 'secret',  // 当前日期
-      dateTime: 'secret'  // ISO 格式的时间
+      comment: newComment.value.trim(),
+      date: currentDateTime.toLocaleDateString(),
+      dateTime: currentDateTime.toISOString(),
+      meeting_id: meetingName
     };
+    console.log("Sending message:", message);
+    socket.emit('createMessage', { message, meetingName });
     newComment.value = '';
-  socket.emit('createMessage', { message, meetingName}); 
   }
 };
 
+// 添加 watch 来监控聊天记录的变化
+watch(chat, (newVal, oldVal) => {
+  console.log("Chat ref changed:");
+  console.log("Old value:", oldVal);
+  console.log("New value:", newVal);
+}, { deep: true });
+
   
 </script>
+
+<style scoped>
+.chat-container {
+  max-height: 500px;
+  overflow-y: auto;
+}
+</style>
 
 
