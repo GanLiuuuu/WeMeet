@@ -85,7 +85,7 @@
   
   <script setup>
   import { ArrowPathIcon, PlusIcon, ServerIcon } from '@heroicons/vue/24/outline';
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, onBeforeUnmount } from 'vue';
   import io from 'socket.io-client';
 import router from '../router';
   
@@ -124,7 +124,14 @@ import router from '../router';
   };
   
   onMounted(() => {
-    socket = io.connect('http://localhost:5001');
+    socket = io.connect('http://localhost:5001',{'force new connection': true});
     socket.on('newMeeting', updateMeetingsList);
+  });
+  
+  onBeforeUnmount(() => {
+    if (socket) {
+      socket.off('newMeeting');
+      socket.disconnect();
+    }
   });
   </script>

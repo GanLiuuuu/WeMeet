@@ -44,10 +44,9 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { io } from 'socket.io-client';
-
 
 const router = useRouter();
 const meetingName = ref('');
@@ -56,7 +55,13 @@ const about = ref('');
 let socket;
 
 onMounted(() => {
-  socket = io.connect('http://localhost:5001');
+  socket = io.connect('http://localhost:5001',{'force new connection': true});
+});
+
+onBeforeUnmount(() => {
+  if (socket) {
+    socket.disconnect();
+  }
 });
 
 const handleSubmit = () => {
@@ -68,14 +73,7 @@ const handleSubmit = () => {
     description: about.value,
   };
 
-  socket.emit('createMeeting', newMeeting); // 发送新会议到服务器
-
-  // 清空数据
-  meetingName.value = '';
-  hostName.value = '';
-  about.value = '';
-
-  // 路由到其他组件
-  router.push('/'); // 假设要路由到 dashboard 组件
+  socket.emit('createMeeting', newMeeting);
+  router.push('/');
 };
 </script>

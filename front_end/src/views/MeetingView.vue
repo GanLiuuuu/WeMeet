@@ -147,7 +147,18 @@ const meetingName = props.name;
 
   const connectSocket = () => {
     console.log("Initializing socket connection...");
-    socket = io("http://localhost:5001");  // 使用默认配置
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+    }
+
+    socket = io.connect("http://localhost:5001", {
+      'force new connection': true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
 
     socket.on('connect', () => {
       console.log("Socket.IO connected");
@@ -157,30 +168,10 @@ const meetingName = props.name;
 
     socket.on('connect_error', (error) => {
       console.error("Socket connection error:", error);
+      setTimeout(connectSocket, 5000); // 5秒后重试连接
     });
 
-    socket.on('connect_timeout', () => {
-      console.error("Socket connection timeout");
-    });
-  }
-
-  const handleCancel = () => {
-    if (socket) {
-      socket.emit('cancel', { meetingName });
-    }
-    router.push('/');
-  }
-  const handleExit = () => {
-    if (socket) {
-      socket.emit('exit', { meetingName });
-    }
-    router.push('/');
-  }
-  onMounted(() => {
-    console.log("Component mounted, connecting socket...");
-    connectSocket();
-    provide('socket', socket);
-
+    // 添加消息更新监听器
     socket.on('update_chat_message', function(data) {
       console.log("Socket received update_chat_message event");
       console.log("Raw data received:", data);
@@ -188,6 +179,12 @@ const meetingName = props.name;
       try {
         if (!data || !data.message) {
           console.warn("Received empty data or message");
+          return;
+        }
+
+        // 检查消息是否属于当前会议
+        if (data.Id && data.Id !== meetingName) {
+          console.log("Message is for different meeting, ignoring");
           return;
         }
 
@@ -228,11 +225,30 @@ const meetingName = props.name;
       console.log('Socket disconnected');
       isSocketReady.value = false;
     });
+  }
+
+  const handleCancel = () => {
+    if (socket) {
+      socket.emit('cancel', { meetingName });
+    }
+    router.push('/');
+  }
+  const handleExit = () => {
+    if (socket) {
+      socket.emit('exit', { meetingName });
+    }
+    router.push('/');
+  }
+  onMounted(() => {
+    console.log("Component mounted, connecting socket...");
+    connectSocket();
+    provide('socket', socket);
   });
 
-  // 处理组件销毁时的清理
+  // 在组件卸载时清理事件监听器
   onBeforeRouteLeave((to, from) => {
     if (socket) {
+      socket.removeAllListeners();
       socket.disconnect();
     }
   });
@@ -253,7 +269,9 @@ const handleSubmit = () => {
       meeting_id: meetingName
     };
     console.log("Sending message:", message);
-    socket.emit('createMessage', { message, meetingName });
+    socket.emit('createMessage', { message, meetingName }, () => {
+      console.log("Message sent successfully");
+    });
     newComment.value = '';
   }
 };
