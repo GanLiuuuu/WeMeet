@@ -124,8 +124,21 @@ import router from '../router';
   };
   
   onMounted(() => {
-    socket = io.connect('http://localhost:5001',{'force new connection': true});
+    socket = io.connect('http://localhost:5001', {
+      'force new connection': true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
+    
     socket.on('newMeeting', updateMeetingsList);
+    
+    // 添加会议取消的处理
+    socket.on('cancel', (data) => {
+      console.log("Meeting cancelled, updating list");
+      socket.emit('connect'); // 重新请求会议列表
+    });
   });
   
   onBeforeUnmount(() => {

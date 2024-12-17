@@ -171,6 +171,18 @@ const meetingName = props.name;
       setTimeout(connectSocket, 5000); // 5秒后重试连接
     });
 
+    // 添加取消事件监听
+    socket.on('cancel', () => {
+      console.log("Meeting cancelled by host");
+      socket.disconnect();
+      router.push('/');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      isSocketReady.value = false;
+    });
+
     // 添加消息更新监听器
     socket.on('update_chat_message', function(data) {
       console.log("Socket received update_chat_message event");
@@ -220,19 +232,27 @@ const meetingName = props.name;
         console.error("Problematic data:", data);
       }
     });
-
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
-      isSocketReady.value = false;
-    });
   }
 
   const handleCancel = () => {
+    console.log("Cancelling meeting:", meetingName);
     if (socket) {
-      socket.emit('cancel', { meetingName });
+      try {
+        socket.emit('cancel', { meetingName });
+        // 等待服务器处理完成
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
+      } catch (error) {
+        console.error("Error during cancel:", error);
+        router.push('/');
+      }
+    } else {
+      console.warn("Socket not connected during cancel");
+      router.push('/');
     }
-    router.push('/');
-  }
+  };
+
   const handleExit = () => {
     if (socket) {
       socket.emit('exit', { meetingName });
