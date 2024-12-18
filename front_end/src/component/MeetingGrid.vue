@@ -3,11 +3,17 @@
     <li v-for="(stream, userId) in remoteStreams" :key="userId" 
         class="col-span-1 flex flex-col divide-y divide-gray-200 rounded-lg bg-white text-center shadow">
       <div class="flex flex-1 flex-col p-8">
-        <video :ref="el => setVideoRef(el, userId)" 
-               :muted="userId === localUserId" 
-               autoplay 
-               class="w-full">
-        </video>
+        <div class="relative w-full" style="padding-top: 75%">
+          <img :src="stream.currentFrame" 
+               class="absolute inset-0 w-full h-full object-cover"
+               :class="{'opacity-100': !stream.loading, 'opacity-0': stream.loading}"
+               style="transition: opacity 0.1s ease-in-out">
+          <img :src="stream.nextFrame" 
+               class="absolute inset-0 w-full h-full object-cover"
+               :class="{'opacity-100': stream.loading, 'opacity-0': !stream.loading}"
+               @load="handleImageLoad(userId)"
+               style="transition: opacity 0.1s ease-in-out">
+        </div>
         <h3 class="mt-6 text-sm font-medium text-gray-900">
           {{ userId === localUserId ? 'You' : `Participant ${userId}` }}
         </h3>
@@ -25,14 +31,16 @@ const route = useRoute();
 const meetingId = route.params.name;
 
 const remoteStreams = ref({});
-const videoElements = {};
 const localUserId = ref(null);
 let localStream = null;
 
-// 存储视频元素引用
-const setVideoRef = (el, userId) => {
-  if (el) {
-    videoElements[userId] = el;
+// 处理图片加载成功
+const handleImageLoad = (userId) => {
+  if (remoteStreams.value[userId]) {
+    // 图片加载完成后，交换当前帧和下一帧
+    const stream = remoteStreams.value[userId];
+    stream.currentFrame = stream.nextFrame;
+    stream.loading = false;
   }
 };
 
@@ -46,31 +54,34 @@ const startLocalStream = async () => {
       }
     });
 
-    // 获取本地用户ID
     localUserId.value = socket.id;
 
-    // 创建用于捕获视频帧的隐藏视频元素
     const hiddenVideo = document.createElement('video');
     hiddenVideo.srcObject = localStream;
     hiddenVideo.autoplay = true;
     hiddenVideo.style.display = 'none';
     document.body.appendChild(hiddenVideo);
 
-    // 每隔固定时间发送视频帧
-    setInterval(() => {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.width = 640;
-      canvas.height = 480;
-      
-      context.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-      
-      const frame = canvas.toDataURL('image/jpeg', 0.5);
-      socket.emit('video_frame', {
-        frame,
-        meeting: meetingId,
-      });
-    }, 100); // 约10fps
+    hiddenVideo.onloadedmetadata = () => {
+      setInterval(() => {
+        try {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = 640;
+          canvas.height = 480;
+          
+          context.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+          
+          const frame = canvas.toDataURL('image/jpeg', 0.5);
+          socket.emit('video_frame', {
+            frame,
+            meeting: meetingId,
+          });
+        } catch (err) {
+          console.error('Error creating frame:', err);
+        }
+      }, 50); // 20fps
+    };
   } catch (err) {
     console.error("Error accessing camera:", err);
   }
@@ -79,54 +90,51 @@ const startLocalStream = async () => {
 onMounted(() => {
   startLocalStream();
 
-  // 接收所有参与者(包括自己)的视频帧
   socket.on('video_frame', ({ userId, frame }) => {
     if (!remoteStreams.value[userId]) {
-      remoteStreams.value[userId] = true;
-    }
-    console.log(userId);
-    if (videoElements[userId]) {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 640;
-        canvas.height = 480;
-        context.drawImage(img, 0, 0);
-        
-        // 将canvas内容转换为视频帧
-        if (!videoElements[userId].srcObject) {
-          videoElements[userId].srcObject = canvas.captureStream();
-        } else {
-          // 更新现有视频流
-          const imageCapture = new ImageCapture(videoElements[userId].srcObject.getVideoTracks()[0]);
-          imageCapture.grabFrame().then(imageBitmap => {
-            context.drawImage(imageBitmap, 0, 0);
-          });
-        }
+      // 初始化新的流
+      remoteStreams.value[userId] = {
+        currentFrame: frame.frame,
+        nextFrame: frame.frame,
+        loading: false
       };
-      img.src = frame;
+    } else {
+      // 更新下一帧
+      const stream = remoteStreams.value[userId];
+      stream.nextFrame = frame.frame;
+      stream.loading = true;
     }
   });
 });
 
 onUnmounted(() => {
-  // 清理所有视频流
-  Object.values(videoElements).forEach(element => {
-    if (element && element.srcObject) {
-      element.srcObject.getTracks().forEach(track => track.stop());
-    }
-  });
-  
-  // 清理本地媒体流
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
   }
   
-  // 移除隐藏的视频元素
   const hiddenVideo = document.querySelector('video[style="display: none;"]');
   if (hiddenVideo) {
     hiddenVideo.remove();
   }
 });
 </script>
+
+<style scoped>
+.opacity-0 {
+  opacity: 0;
+}
+.opacity-100 {
+  opacity: 1;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+</style>
