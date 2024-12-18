@@ -1,6 +1,5 @@
 <template>
   <ul role="list" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
-    <!-- All videos (including local video) -->
     <li v-for="(stream, userId) in remoteStreams" :key="userId" 
         class="col-span-1 flex flex-col divide-y divide-gray-200 rounded-lg bg-white text-center shadow">
       <div class="flex flex-1 flex-col p-8">
@@ -18,7 +17,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, inject, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, inject } from 'vue';
 import { useRoute } from 'vue-router';
 
 const socket = inject('socket');
@@ -28,6 +27,7 @@ const meetingId = route.params.name;
 const remoteStreams = ref({});
 const videoElements = {};
 const localUserId = ref(null);
+let localStream = null;
 
 // 存储视频元素引用
 const setVideoRef = (el, userId) => {
@@ -36,28 +36,25 @@ const setVideoRef = (el, userId) => {
   }
 };
 
-// 开启本地视频流
+// 开启本地视频流并发送
 const startLocalStream = async () => {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
+    localStream = await navigator.mediaDevices.getUserMedia({ 
       video: {
         width: { ideal: 640 },
         height: { ideal: 480 }
       }
     });
 
-    // 获取本地用户ID (从socket或其他地方)
-    localUserId.value = socket.id; // 或其他方式获取用户ID
-    
-    // 将本地流添加到remoteStreams中
-    remoteStreams.value[localUserId.value] = true;
-    
-    // 在下一个tick更新后设置视频流
-    nextTick(() => {
-      if (videoElements[localUserId.value]) {
-        videoElements[localUserId.value].srcObject = stream;
-      }
-    });
+    // 获取本地用户ID
+    localUserId.value = socket.id;
+
+    // 创建用于捕获视频帧的隐藏视频元素
+    const hiddenVideo = document.createElement('video');
+    hiddenVideo.srcObject = localStream;
+    hiddenVideo.autoplay = true;
+    hiddenVideo.style.display = 'none';
+    document.body.appendChild(hiddenVideo);
 
     // 每隔固定时间发送视频帧
     setInterval(() => {
@@ -66,17 +63,13 @@ const startLocalStream = async () => {
       canvas.width = 640;
       canvas.height = 480;
       
-      // 确保视频元素存在
-      if (videoElements[localUserId.value]) {
-        context.drawImage(videoElements[localUserId.value], 0, 0, canvas.width, canvas.height);
-        
-        // 压缩图像质量
-        const frame = canvas.toDataURL('image/jpeg', 0.5);
-        socket.emit('video_frame', {
-          frame,
-          meetingId,
-        });
-      }
+      context.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+      
+      const frame = canvas.toDataURL('image/jpeg', 0.5);
+      socket.emit('video_frame', {
+        frame,
+        meeting: meetingId,
+      });
     }, 100); // 约10fps
   } catch (err) {
     console.error("Error accessing camera:", err);
@@ -86,13 +79,13 @@ const startLocalStream = async () => {
 onMounted(() => {
   startLocalStream();
 
-  // 接收其他参与者的视频帧
+  // 接收所有参与者(包括自己)的视频帧
   socket.on('video_frame', ({ userId, frame }) => {
     if (!remoteStreams.value[userId]) {
       remoteStreams.value[userId] = true;
     }
-    
-    if (videoElements[userId] && userId !== localUserId.value) {
+    console.log(userId);
+    if (videoElements[userId]) {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -104,6 +97,12 @@ onMounted(() => {
         // 将canvas内容转换为视频帧
         if (!videoElements[userId].srcObject) {
           videoElements[userId].srcObject = canvas.captureStream();
+        } else {
+          // 更新现有视频流
+          const imageCapture = new ImageCapture(videoElements[userId].srcObject.getVideoTracks()[0]);
+          imageCapture.grabFrame().then(imageBitmap => {
+            context.drawImage(imageBitmap, 0, 0);
+          });
         }
       };
       img.src = frame;
@@ -118,5 +117,16 @@ onUnmounted(() => {
       element.srcObject.getTracks().forEach(track => track.stop());
     }
   });
+  
+  // 清理本地媒体流
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+  }
+  
+  // 移除隐藏的视频元素
+  const hiddenVideo = document.querySelector('video[style="display: none;"]');
+  if (hiddenVideo) {
+    hiddenVideo.remove();
+  }
 });
 </script>
