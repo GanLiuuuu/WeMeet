@@ -35,24 +35,31 @@ const localUserId = ref(null);
 
 // 处理图片加载成功
 const handleImageLoad = (userId) => {
+  console.log(`[MeetingGrid] Image loaded for user ${userId}`);
   if (remoteStreams.value[userId]) {
     const stream = remoteStreams.value[userId];
     stream.currentFrame = stream.nextFrame;
     stream.loading = false;
+    console.log(`[MeetingGrid] Frame updated for user ${userId}`);
   }
 };
 
 onMounted(() => {
+  console.log('[MeetingGrid] Component mounted');
   localUserId.value = socket.id;
+  console.log(`[MeetingGrid] Local user ID: ${localUserId.value}`);
 
   socket.on('video_frame', ({ userId, frame }) => {
+    console.log(`[MeetingGrid] Received video frame from user ${userId}`);
     if (!remoteStreams.value[userId]) {
+      console.log(`[MeetingGrid] Creating new stream for user ${userId}`);
       remoteStreams.value[userId] = {
         currentFrame: frame,
         nextFrame: frame,
         loading: false
       };
     } else {
+      console.log(`[MeetingGrid] Updating existing stream for user ${userId}`);
       const stream = remoteStreams.value[userId];
       stream.nextFrame = frame;
       stream.loading = true;
@@ -61,6 +68,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  console.log('[MeetingGrid] Component unmounting');
   socket.off('video_frame');
 });
 </script>
