@@ -32,90 +32,36 @@ const meetingId = route.params.name;
 
 const remoteStreams = ref({});
 const localUserId = ref(null);
-let localStream = null;
 
 // 处理图片加载成功
 const handleImageLoad = (userId) => {
   if (remoteStreams.value[userId]) {
-    // 图片加载完成后，交换当前帧和下一帧
     const stream = remoteStreams.value[userId];
     stream.currentFrame = stream.nextFrame;
     stream.loading = false;
   }
 };
 
-// 开启本地视频流并发送
-const startLocalStream = async () => {
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ 
-      video: {
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      }
-    });
-
-    localUserId.value = socket.id;
-
-    const hiddenVideo = document.createElement('video');
-    hiddenVideo.srcObject = localStream;
-    hiddenVideo.autoplay = true;
-    hiddenVideo.style.display = 'none';
-    document.body.appendChild(hiddenVideo);
-
-    hiddenVideo.onloadedmetadata = () => {
-      setInterval(() => {
-        try {
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.width = 640;
-          canvas.height = 480;
-          
-          context.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
-          
-          const frame = canvas.toDataURL('image/jpeg', 0.5);
-          socket.emit('video_frame', {
-            frame,
-            meeting: meetingId,
-          });
-        } catch (err) {
-          console.error('Error creating frame:', err);
-        }
-      }, 50); // 20fps
-    };
-  } catch (err) {
-    console.error("Error accessing camera:", err);
-  }
-};
-
 onMounted(() => {
-  startLocalStream();
+  localUserId.value = socket.id;
 
   socket.on('video_frame', ({ userId, frame }) => {
     if (!remoteStreams.value[userId]) {
-      // 初始化新的流
       remoteStreams.value[userId] = {
-        currentFrame: frame.frame,
-        nextFrame: frame.frame,
+        currentFrame: frame,
+        nextFrame: frame,
         loading: false
       };
     } else {
-      // 更新下一帧
       const stream = remoteStreams.value[userId];
-      stream.nextFrame = frame.frame;
+      stream.nextFrame = frame;
       stream.loading = true;
     }
   });
 });
 
 onUnmounted(() => {
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-  }
-  
-  const hiddenVideo = document.querySelector('video[style="display: none;"]');
-  if (hiddenVideo) {
-    hiddenVideo.remove();
-  }
+  socket.off('video_frame');
 });
 </script>
 
