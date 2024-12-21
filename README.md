@@ -5,34 +5,53 @@ WeMeet 是一个会议网站，旨在为用户提供一个方便的平台来组�
 ## 功能
 
 - 创建和管理会议
-- 邀请参与者
-- 实时连接功能
+- 实时音视频通话
+- 屏幕共享
+- 实时聊天
 - 跨域支持，确保前后端无缝交互
 
 ## 技术栈
 
 - 前端: Vue.js
-- 后端: Flask
+- 后端: Flask + Python Socket
 - 跨域支持: Flask-CORS
 
 ## 安装与运行
 
-1. 克隆项目：
+1. 首先确保已经安装并运行了 Online-meeting 后端服务：
    ```bash
-   git clone <repository-url>
-   cd WeMeet
-    ```
-2. 启动后端
-   需要安装好flask等依赖
+   # 在 Online-meeting 目录下
+   # 启动服务器
+   python server.py
+   
+   # 在新终端中启动客户端
+   python client.py
+   ```
+
+2. 安装前端依赖并启动：
    ```bash
-   cd back_end
-    python app.py
-    cd ..
-    ```
-3. 构建前端：
-   ```bash
-    cd front_end
-    npm install
-    npm run dev
-    ```
+   # 进入前端目录
+   cd front_end
+   
+   # 安装依赖
+   npm install
+   
+   # 启动开发服务器
+   npm run dev
+   ```
+
+3. 打开浏览器访问：
+   ```
+   http://localhost:3000
+   ```
+
+## 使用说明
+
+1. 创建会议：点击"创建会议"按钮，输入会议名称
+2. 加入会议：在会议列表中点击想要加入的会议
+3. 会议控制：
+   - 可以通过界面上的按钮控制摄像头开关
+   - 可以通过界面上的按钮控制麦克风开关
+   - 可以在聊天区域发送消息
+4. 离开会议：点击"Exit"按钮离开会议
    
