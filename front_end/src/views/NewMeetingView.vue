@@ -74,6 +74,6 @@ const handleSubmit = () => {
   };
 
   socket.emit('createMeeting', newMeeting);
-  router.push('/');
+  router.push(`/meeting/${meetingName.value}`);
 };
 </script>
