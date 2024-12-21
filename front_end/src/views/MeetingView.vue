@@ -225,6 +225,13 @@ const meetingName = props.name;
       isSocketReady.value = false;
     });
 
+    // 添加会议结束事件监听
+    socket.on('meeting_ended', (data) => {
+      console.log("Meeting has ended:", data.message);
+      socket.disconnect();
+      router.push('/');
+    });
+
     // 添加消息更新监听器
     socket.on('update_chat_message', function(data) {
       console.log("Socket received update_chat_message event");
