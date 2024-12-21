@@ -17,6 +17,22 @@
               </h1>
             </div>
             <div class="flex items-center gap-x-4 sm:gap-x-6">
+              <!-- Camera Toggle Button -->
+              <button @click="toggleCamera" 
+                      class="rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                      :class="isCameraOn ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-600 hover:bg-gray-500'">
+                <span v-if="isCameraOn">Camera On</span>
+                <span v-else>Camera Off</span>
+              </button>
+              
+              <!-- Microphone Toggle Button -->
+              <button @click="toggleMicrophone" 
+                      class="rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                      :class="isMicrophoneOn ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-600 hover:bg-gray-500'">
+                <span v-if="isMicrophoneOn">Mic On</span>
+                <span v-else>Mic Off</span>
+              </button>
+              
               <button @click="handleExit" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">Exit</button>
               <button  @click="handleCancel" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Cancel</button>
             </div>
@@ -139,6 +155,25 @@ const meetingName = props.name;
   let socket = null;
   const isSocketReady = ref(false); 
 
+  const isCameraOn = ref(false);
+  const isMicrophoneOn = ref(false);
+
+  const toggleCamera = () => {
+    isCameraOn.value = !isCameraOn.value;
+    socket.emit('video_frame', {
+      meetingId: meetingName,
+      action: isCameraOn.value ? 'start' : 'stop'
+    });
+  };
+
+  const toggleMicrophone = () => {
+    isMicrophoneOn.value = !isMicrophoneOn.value;
+    socket.emit('audio_control', {
+      meetingId: meetingName,
+      action: isMicrophoneOn.value ? 'start' : 'stop'
+    });
+  };
+
   // 添加获取历史记录的函数
   const requestChatHistory = () => {
     console.log("Requesting chat history for meeting:", meetingName);
@@ -169,6 +204,13 @@ const meetingName = props.name;
     socket.on('connect_error', (error) => {
       console.error("Socket connection error:", error);
       setTimeout(connectSocket, 5000); // 5秒后重试连接
+    });
+
+    // 添加初始状态处理
+    socket.on('initial_state', (state) => {
+      console.log("Received initial state:", state);
+      isCameraOn.value = state.video;
+      isMicrophoneOn.value = state.audio;
     });
 
     // 添加取消事件监听
