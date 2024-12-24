@@ -67,7 +67,7 @@
                       <div class="py-0.5 text-xs/5 text-gray-500">
                         <span class="font-medium text-gray-900">{{ message.person.name }}</span> commented
                       </div>
-                      <time :datetime="message.dateTime" class="flex-none py-0.5 text-xs/5 text-gray-500">{{ message.date }}</time>
+                      <time :datetime="message.dateTime" class="flex-none py-0.5 text-xs/5 text-gray-500">{{ message.dateTime.slice(0, 10)+" "+ message.dateTime.slice(11, 19)}}</time>
                     </div>
                     <p class="text-sm/6 text-gray-500">{{ message.comment }}</p>
                   </div>
@@ -290,7 +290,7 @@ const meetingName = props.name;
         socket.emit('cancel', { meetingName });
         // 等待服务器处理完成
         setTimeout(() => {
-          router.push('/');
+          //router.push('/');
         }, 1000);
       } catch (error) {
         console.error("Error during cancel:", error);
@@ -333,7 +333,7 @@ const handleSubmit = () => {
         imageUrl: 'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
       },
       comment: newComment.value.trim(),
-      date: currentDateTime.toLocaleDateString(),
+      date: currentDateTime.toLocaleString(),
       dateTime: currentDateTime.toISOString(),
       meeting_id: meetingName
     };
